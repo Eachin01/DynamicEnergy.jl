@@ -58,11 +58,18 @@ end
     volume::Float64 = 1.0,
     nPorts::Int = 2,
     T_init::Float64 = 273.15 + 20,
+    use_heat_flux::Bool = false
 )
     @assert volume > 0 "volume must be positive"
     @assert nPorts >= 1 "nPorts must be at least one"
     vars = @variables begin
         T(t) = T_init
+    end
+    if use_heat_flux
+        @variables heat_flux(t) [input = true, description = "Additional heat flux to volume"]
+        append!(vars, heat_flux)
+    else
+        heat_flux = 0
     end
     pars = @parameters begin
     end
@@ -74,7 +81,7 @@ end
         volume * rho * cp * D(T) ~ sum(
             port.mFlow * ifelse(port.mFlow > 0, instream(port.h_outflow), h)
             for port in ports
-        ),
+        ) + ifelse(use_heat_flux, heat_flux, 0),
         sum(port.mFlow for port in ports) ~ 0,
     ]
     append!(eqs, [ports[1].p ~ ports[i].p for i in 2:nPorts])
