@@ -5,6 +5,7 @@ Library of chilled water models.
 using ModelingToolkit: @parameters, @variables, @component, @connector, @named
 using ModelingToolkit: System, Equation, connect, instream, Flow, Stream
 using ModelingToolkit: t_nounits as t, D_nounits as D
+using ModelingToolkitStandardLibrary.Blocks: RealInput
 
 DENSITY::Float64 = 997.0
 SPECIFIC_HEAT::Float64 = 4186.0
@@ -66,8 +67,8 @@ end
         T(t) = T_init
     end
     if use_heat_flux
-        @variables heat_flux(t) [input = true, description = "Additional heat flux to volume"]
-        append!(vars, heat_flux)
+        @named flux_input = RealInput()
+        heat_flux = flux_input.u
     else
         heat_flux = 0
     end
@@ -86,7 +87,7 @@ end
     ]
     append!(eqs, [ports[1].p ~ ports[i].p for i in 2:nPorts])
     append!(eqs, [port.h_outflow ~ h for port in ports])
-    System(eqs, t, vars, pars; systems = ports, name)
+    System(eqs, t, vars, pars; systems = [ports..., flux_input], name)
 end
 
 # Memoryless resistance: dp = k*mFlow*abs(mFlow), valid in either flow direction.
