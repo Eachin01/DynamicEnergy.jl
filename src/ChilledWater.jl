@@ -75,7 +75,8 @@ end
     end
     pars = @parameters begin
     end
-    ports = [WaterPort(; name = Symbol("port_$i")) for i in 1:nPorts]
+    # ports = [WaterPort(; name = Symbol("port_$i")) for i in 1:nPorts]
+    @named ports[1:nPorts] = WaterPort()
     rho = DENSITY
     cp = SPECIFIC_HEAT
     h = temperature2Enthalpy(T)
@@ -88,7 +89,7 @@ end
     ]
     append!(eqs, [ports[1].p ~ ports[i].p for i in 2:nPorts])
     append!(eqs, [port.h_outflow ~ h for port in ports])
-    System(eqs, t, vars, pars; systems = [ports..., flux_input], name)
+    System(eqs, t, vars, pars; systems = use_heat_flux ? [ports..., flux_input] : ports, name)
 end
 
 # Memoryless resistance: dp = k*mFlow*abs(mFlow), valid in either flow direction.
