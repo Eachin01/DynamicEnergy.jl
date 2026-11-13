@@ -2,7 +2,7 @@
 
 julia_version = "1.13.1"
 manifest_format = "2.1"
-project_hash = "242667e340abab0b1833be073d434bd34f3349ad"
+project_hash = "8f1edd6ff96c4ff95df1c049e812f708ec2035b9"
 
 [[deps.ADTypes]]
 deps = ["PrecompileTools"]
@@ -383,6 +383,30 @@ git-tree-sha1 = "fd798b61b03b15dda0715aac807885397e6ded88"
 registries = "General"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 version = "1.8.3"
+
+[[deps.DataInterpolations]]
+deps = ["EnumX", "FindFirstFunctions", "ForwardDiff", "LinearAlgebra", "PrecompileTools", "PrettyTables", "RecipesBase", "Reexport", "StaticArrays"]
+git-tree-sha1 = "eb1c2d182619f257312fee4287c78bb11bb098c7"
+registries = "General"
+uuid = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
+version = "10.1.4"
+
+    [deps.DataInterpolations.extensions]
+    DataInterpolationsChainRulesCoreExt = "ChainRulesCore"
+    DataInterpolationsCurveFitExt = "CurveFit"
+    DataInterpolationsMakieExt = "Makie"
+    DataInterpolationsMooncakeExt = ["Mooncake", "ChainRulesCore"]
+    DataInterpolationsSparseConnectivityTracerExt = "SparseConnectivityTracer"
+    DataInterpolationsSymbolicsExt = "Symbolics"
+
+    [deps.DataInterpolations.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    CurveFit = "5a033b19-8c74-5913-a970-47c3779ef25c"
+    Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+    Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
+    SparseConnectivityTracer = "9f842d2f-2579-4b1d-911e-f412cf18a3f5"
+    Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+    Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [[deps.DataStructures]]
 deps = ["OrderedCollections"]
