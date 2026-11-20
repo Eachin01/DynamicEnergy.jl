@@ -170,7 +170,8 @@ end
     name,
     nominalFlowRate::Float64 = 1.0,
     nominalPressureDrop::Float64 = 1000.0,
-    R::Float64 = 50.0)
+    R::Float64 = 50.0,
+    eps_dP::Float64 = 1e-3)
     @assert nominalFlowRate > 0 "nominalFlowRate must be positive"
     @assert nominalPressureDrop > 0 "nominalPressureDrop must be positive"
     vars = @variables begin
@@ -186,7 +187,7 @@ end
     K = K_max * R^(2*(1 - u_bound))
     eqs = [
         dP ~ port1.p - port2.p,
-        dP ~ K * port1.mFlow * abs(port1.mFlow),
+        max(dP, 0) ~ K * port1.mFlow * sqrt(port1.mFlow^2 + eps_dP^2),
         port1.mFlow + port2.mFlow ~ 0,
         port1.h_outflow ~ instream(port2.h_outflow),
         port2.h_outflow ~ instream(port1.h_outflow),

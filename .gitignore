@@ -2,3 +2,6 @@
 
 /test/*.txt
 /test/*.png
+
+# personal learning notes
+/learning/
