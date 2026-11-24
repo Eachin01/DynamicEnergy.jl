@@ -75,21 +75,21 @@ end
     end
     pars = @parameters begin
     end
-    # ports = [WaterPort(; name = Symbol("port_$i")) for i in 1:nPorts]
-    @named ports[1:nPorts] = WaterPort()
+    # port = [WaterPort(; name = Symbol("port_$i")) for i in 1:nPorts]
+    @named port[1:nPorts] = WaterPort()
     rho = DENSITY
     cp = SPECIFIC_HEAT
     h = temperature2Enthalpy(T)
     eqs = Equation[
         volume * rho * cp * D(T) ~ sum(
-            port.mFlow * ifelse(port.mFlow > 0, instream(port.h_outflow), h)
-            for port in ports
+            pt.mFlow * ifelse(pt.mFlow > 0, instream(pt.h_outflow), h)
+            for pt in port
         ) + ifelse(use_heat_flux, heat_flux, 0),
-        sum(port.mFlow for port in ports) ~ 0,
+        sum(pt.mFlow for pt in port) ~ 0,
     ]
-    append!(eqs, [ports[1].p ~ ports[i].p for i in 2:nPorts])
-    append!(eqs, [port.h_outflow ~ h for port in ports])
-    System(eqs, t, vars, pars; systems = use_heat_flux ? [ports..., flux_input] : ports, name)
+    append!(eqs, [port[1].p ~ port[i].p for i in 2:nPorts])
+    append!(eqs, [port.h_outflow ~ h for port in port])
+    System(eqs, t, vars, pars; systems = use_heat_flux ? [port..., flux_input] : port, name)
 end
 
 # Memoryless resistance: dp = k*mFlow*abs(mFlow), valid in either flow direction.
@@ -104,16 +104,16 @@ end
     end
     pars = @parameters begin
     end
-    @named port1 = WaterPort()
-    @named port2 = WaterPort()
+    @named port_1 = WaterPort()
+    @named port_2 = WaterPort()
     k = nominalPressureDrop / nominalFlowRate^2
     eqs = [
-        port1.mFlow + port2.mFlow ~ 0,
-        port1.p - port2.p ~ k * port1.mFlow * abs(port1.mFlow),
-        port1.h_outflow ~ instream(port2.h_outflow),
-        port2.h_outflow ~ instream(port1.h_outflow),
+        port_1.mFlow + port_2.mFlow ~ 0,
+        port_1.p - port_2.p ~ k * port_1.mFlow * abs(port_1.mFlow),
+        port_1.h_outflow ~ instream(port_2.h_outflow),
+        port_2.h_outflow ~ instream(port_1.h_outflow),
     ]
-    System(eqs, t, vars, pars; systems = [port1, port2], name)
+    System(eqs, t, vars, pars; systems = [port_1, port_2], name)
 end
 
 @component function Pump_dp(;
@@ -124,15 +124,15 @@ end
     end
     pars = @parameters begin
     end
-    @named port1 = WaterPort()
-    @named port2 = WaterPort()
+    @named port_1 = WaterPort()
+    @named port_2 = WaterPort()
     eqs = [
-        port1.mFlow + port2.mFlow ~ 0,
-        port1.p - port2.p ~ - dp,
-        port1.h_outflow ~ instream(port2.h_outflow),
-        port2.h_outflow ~ instream(port1.h_outflow),
+        port_1.mFlow + port_2.mFlow ~ 0,
+        port_1.p - port_2.p ~ - dp,
+        port_1.h_outflow ~ instream(port_2.h_outflow),
+        port_2.h_outflow ~ instream(port_1.h_outflow),
     ]
-    System(eqs, t, vars, pars; systems = [port1, port2], name)
+    System(eqs, t, vars, pars; systems = [port_1, port_2], name)
 end
 
 @component function Pump_curve(;
@@ -151,19 +151,19 @@ end
     end
     pars = @parameters begin
     end
-    @named port1 = WaterPort()
-    @named port2 = WaterPort()
+    @named port_1 = WaterPort()
+    @named port_2 = WaterPort()
     u_bounded = max(min(u, 1.0), 1e-6)
-    m_flow_norm = port1.mFlow / u_bounded
+    m_flow_norm = port_1.mFlow / u_bounded
     eqs = [
-        - dP ~ port1.p - port2.p,
+        - dP ~ port_1.p - port_2.p,
         dP ~ u_bounded^2 * dPcurve(m_flow_norm),
         Power ~ u_bounded^3 * PowerCurve(m_flow_norm),
-        port1.mFlow + port2.mFlow ~ 0,
-        port1.h_outflow ~ instream(port2.h_outflow),
-        port2.h_outflow ~ instream(port1.h_outflow),
+        port_1.mFlow + port_2.mFlow ~ 0,
+        port_1.h_outflow ~ instream(port_2.h_outflow),
+        port_2.h_outflow ~ instream(port_1.h_outflow),
     ]
-    System(eqs, t, vars, pars; systems = [port1, port2], name)
+    System(eqs, t, vars, pars; systems = [port_1, port_2], name)
 end
 
 @component function CheckValve_equalPercentage(;
@@ -180,17 +180,144 @@ end
     end
     pars = @parameters begin
     end
-    @named port1 = WaterPort()
-    @named port2 = WaterPort()
+    @named port_1 = WaterPort()
+    @named port_2 = WaterPort()
     u_bound = max(min(u, 1.0), 1e-6)
     K_max = nominalPressureDrop / nominalFlowRate^2
     K = K_max * R^(2*(1 - u_bound))
     eqs = [
-        dP ~ port1.p - port2.p,
-        max(dP, 0) ~ K * port1.mFlow * sqrt(port1.mFlow^2 + eps_dP^2),
-        port1.mFlow + port2.mFlow ~ 0,
-        port1.h_outflow ~ instream(port2.h_outflow),
-        port2.h_outflow ~ instream(port1.h_outflow),
+        dP ~ port_1.p - port_2.p,
+        max(dP, 0) ~ K * port_1.mFlow * sqrt(port_1.mFlow^2 + eps_dP^2),
+        port_1.mFlow + port_2.mFlow ~ 0,
+        port_1.h_outflow ~ instream(port_2.h_outflow),
+        port_2.h_outflow ~ instream(port_1.h_outflow),
     ]
-    System(eqs, t, vars, pars; systems = [port1, port2], name)
+    System(eqs, t, vars, pars; systems = [port_1, port_2], name)
+end
+
+@component function PolyCOP(;
+    name,
+    COPatFull::Float64, 
+    # COP at full load and nominal evaporator fluid outlet temperature 
+    # and condensor fluid inlet temperature
+    COPatPeak:: Float64,
+    # COP at peak Load ratio
+    LRpeakCOP:: Float64,
+    # The load ratio where the peak COP occurs
+    TevapCOPratio:: Float64,
+    # The effect of evaporator's temperature on COP, a number larger than 1
+    TcondCOPratio:: Float64,
+    # The effect of condensor's temperature on COP, a number larger than 1
+    TevapOutNml:: Float64,
+    # Nominal evaporator fluid outlet temperature, in K
+    TcondInNml:: Float64,
+    # Nominal condensor fluid inlet temperature, in K
+    COPmin:: Float64,
+    # COP min
+    COPmax:: Float64,
+    # COP max
+    )
+    @assert 0 < LRpeakCOP < 1 "LRpeakCOP must lie in (0, 1)"
+    @assert COPatPeak > COPatFull "COPatPeak must exceed COPatFull, otherwise the COP-LR curve opens upward"
+    vars = @variables begin
+        LR(t), [input = true]
+        TcondIn(t), [input = true]
+        TevapOut(t), [input = true]
+        COP(t), [output = true]
+    end
+    pars = @parameters begin
+        COPatFull = COPatFull,
+        COPatPeak = COPatPeak,
+        LRpeakCOP = LRpeakCOP,
+        TevapCOPratio = TevapCOPratio,
+        TcondCOPratio = TcondCOPratio,
+        TevapOutNml = TevapOutNml,
+        TcondInNml = TcondInNml,
+        COPmin = COPmin,
+        COPmax = COPmax
+    end
+    a = (COPatPeak - COPatFull)/((1 - LRpeakCOP^2)^2)
+    COP_nml = COPatPeak - a*((LR - LRpeakCOP)^2)
+    COP_nml_fix = COP_nml*((TevapCOPratio)^(TevapOut - TevapOutNml))*(TcondCOPratio^(TcondInNml - TcondIn))
+    eqs = [
+        COP ~ max(COPmin, min(COPmax, COP_nml_fix))
+    ]
+    System(eqs, t, vars, pars; name)
+end
+
+"""
+This is chiller cooling output model. 
+Equation:
+    x = TevapOut - TevapOutNml      
+    y = TcondIn - TcondInNml     
+    CAPFT = 1 + c1·x + c2·x² + c3·y + c4·y² + c5·x·y
+    Q_cap = QClgNominal · max(CAPFT, CAP_min)
+Constraint:
+    dCAPFT/dx|bound TevapOut = fx ≥ 0   
+    dCAPFT/dy|bound TcondIn = fy ≤ 0 
+"""
+@component function ChillerQcapPoly(;
+    name,
+    TevapOutNml::Float64 = 7.0 + 273.15,
+    TcondInNml:: Float64 = 33.0 + 273.15,
+    QclgNml:: Float64 = 10.2e6,
+    c:: Vector{Float64} = [-0.00635, 0.008518, -0.015, -0.0002, 0.0],
+    TevapOutBound:: Vector{Float64} = [7.0 + 273.15, 12.0 + 273.15],
+    TcondInBound:: Vector{Float64} = [33.0 + 273.15, 38.0 + 273.15],
+    CAP_min:: Float64 = 0.5,
+    eps_mFlow:: Float64 = 1e-6)
+
+    c1, c2, c3, c4, c5 = c
+    TevapOutMin, TevapOutMax = TevapOutBound
+    TcondInMin, TcondInMax = TcondInBound
+    xlo, xhi = TevapOutMin - TevapOutNml, TevapOutMax - TevapOutNml
+    ylo, yhi = TcondInMin  - TcondInNml,  TcondInMax  - TcondInNml
+    fx_min = c1 + min(2c2*xlo, 2c2*xhi) + min(c5*ylo, c5*yhi)
+    fy_max = c3 + max(2c4*ylo, 2c4*yhi) + max(c5*xlo, c5*xhi)
+    @assert fx_min > 0 "Not monotonous within the TevapOut range"
+    @assert fy_max < 0 "Not monotonous within the TcondIn range"
+
+    vars = @variables begin
+        TevapOut(t), [guess = 7.0 + 273.15]
+        TcondIn(t), [guess = 33.0 + 273.15]
+        Q_cap(t), [output = true]
+        Q(t), [output = true]
+        LR(t), [output = true]
+    end
+    pars = @parameters begin
+        c1 = c[1],
+        c2 = c[2],
+        c3 = c[3],
+        c4 = c[4],
+        c5 = c[5],
+        TevapOutNml = TevapOutNml,
+        TcondInNml = TcondInNml,
+        QclgNml = QclgNml,
+        CAP_min = CAP_min
+    end
+    @named port_1 = WaterPort() # Chilled water In
+    @named port_2 = WaterPort() # Chilled water Out
+    @named port_3 = WaterPort() # Cooling water In
+    @named port_4 = WaterPort() # Cooling water Out
+    x = TevapOut - TevapOutNml      
+    y = TcondIn - TcondInNml     
+    CAPFT = 1 + c1*x + c2*x^2 + c3*y + c4*y^2 + c5*x*y
+    h_cwIn = instream(port_1.h_outflow)
+    h_clIn = instream(port_3.h_outflow)
+    Fcw = port_1.mFlow
+    Fcl = port_3.mFlow
+    Q_req = max(0, (h_cwIn - temperature2Enthalpy(7.0 + 273.15)) * max(eps_mFlow, Fcw))
+    eqs = [
+        TevapOut ~ enthalpy2TemperatureK(port_2.h_outflow),
+        TcondIn ~ enthalpy2TemperatureK(instream(port_3.h_outflow)),
+        Q_cap ~ QclgNml * max(CAPFT, CAP_min),
+        Q ~ min(Q_req, Q_cap),
+        port_1.h_outflow ~ instream(port_2.h_outflow),
+        port_2.h_outflow ~ h_cwIn - Q/max(eps_mFlow, Fcw),
+        port_3.h_outflow ~ instream(port_4.h_outflow),
+        port_4.h_outflow ~ h_clIn + Q/max(eps_mFlow, Fcl),
+        port_1.mFlow + port_2.mFlow ~ 0,
+        port_3.mFlow + port_4.mFlow ~ 0,
+    ]
+    System(eqs, t, vars, pars; name, systems = [port_1, port_2, port_3, port_4])
 end
