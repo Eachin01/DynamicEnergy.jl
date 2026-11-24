@@ -30,7 +30,7 @@ end
     @named pin_2 = HeatPin()
     deltaT = pin_1.T - pin_2.T
     eqs = [
-        pin_1.q_flow = G_value*deltaT,
+        pin_1.q_flow ~ G_value*deltaT,
         pin_1.q_flow + pin_2.q_flow ~ 0,
     ]
     System(eqs, t, vars, pars; systems = [pin_1, pin_2], name)

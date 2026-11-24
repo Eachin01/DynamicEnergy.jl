@@ -285,14 +285,14 @@ Constraint:
         LR(t), [output = true]
     end
     pars = @parameters begin
-        c1 = c[1],
-        c2 = c[2],
-        c3 = c[3],
-        c4 = c[4],
-        c5 = c[5],
-        TevapOutNml = TevapOutNml,
-        TcondInNml = TcondInNml,
-        QclgNml = QclgNml,
+        c1 = c[1]
+        c2 = c[2]
+        c3 = c[3]
+        c4 = c[4]
+        c5 = c[5]
+        TevapOutNml = TevapOutNml
+        TcondInNml = TcondInNml
+        QclgNml = QclgNml
         CAP_min = CAP_min
     end
     @named port_1 = WaterPort() # Chilled water In
@@ -312,6 +312,7 @@ Constraint:
         TcondIn ~ enthalpy2TemperatureK(instream(port_3.h_outflow)),
         Q_cap ~ QclgNml * max(CAPFT, CAP_min),
         Q ~ min(Q_req, Q_cap),
+        LR ~ Q/QclgNml,
         port_1.h_outflow ~ instream(port_2.h_outflow),
         port_2.h_outflow ~ h_cwIn - Q/max(eps_mFlow, Fcw),
         port_3.h_outflow ~ instream(port_4.h_outflow),
