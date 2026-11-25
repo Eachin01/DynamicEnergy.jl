@@ -6,7 +6,9 @@ include("HeatTransfer.jl")
 end
 
 module ChilledWater
-export WaterPort, Boundary_pT, MixingVolume, PressureDrop, Pump_dp, PolyCOP, ChillerQcapPoly
+export WaterPort, Boundary_pT, MixingVolume, 
+        PressureDrop, Pump_dp, PolyCOP, ChillerQcapPoly,
+        enthalpy2TemperatureK, temperature2Enthalpy
 include("ChilledWater.jl")
 end
 

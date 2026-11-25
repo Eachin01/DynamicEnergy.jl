@@ -226,21 +226,23 @@ end
         COP(t), [output = true]
     end
     pars = @parameters begin
-        COPatFull = COPatFull,
-        COPatPeak = COPatPeak,
-        LRpeakCOP = LRpeakCOP,
-        TevapCOPratio = TevapCOPratio,
-        TcondCOPratio = TcondCOPratio,
-        TevapOutNml = TevapOutNml,
-        TcondInNml = TcondInNml,
-        COPmin = COPmin,
+        COPatFull = COPatFull
+        COPatPeak = COPatPeak
+        LRpeakCOP = LRpeakCOP
+        TevapCOPratio = TevapCOPratio
+        TcondCOPratio = TcondCOPratio
+        TevapOutNml = TevapOutNml
+        TcondInNml = TcondInNml
+        COPmin = COPmin
         COPmax = COPmax
     end
-    a = (COPatPeak - COPatFull)/((1 - LRpeakCOP^2)^2)
+    a = (COPatPeak - COPatFull)/((1 - LRpeakCOP)^2)
     COP_nml = COPatPeak - a*((LR - LRpeakCOP)^2)
-    COP_nml_fix = COP_nml*((TevapCOPratio)^(TevapOut - TevapOutNml))*(TcondCOPratio^(TcondInNml - TcondIn))
+    COP_nml_fixed = COP_nml*
+                    ((TevapCOPratio)^(TevapOut - TevapOutNml))*
+                    (TcondCOPratio^(TcondInNml - TcondIn))
     eqs = [
-        COP ~ max(COPmin, min(COPmax, COP_nml_fix))
+        COP ~ max(COPmin, min(COPmax, COP_nml_fixed))
     ]
     System(eqs, t, vars, pars; name)
 end
@@ -312,7 +314,7 @@ Constraint:
         TcondIn ~ enthalpy2TemperatureK(instream(port_3.h_outflow)),
         Q_cap ~ QclgNml * max(CAPFT, CAP_min),
         Q ~ min(Q_req, Q_cap),
-        LR ~ Q/QclgNml,
+        LR ~ Q/Q_cap,
         port_1.h_outflow ~ instream(port_2.h_outflow),
         port_2.h_outflow ~ h_cwIn - Q/max(eps_mFlow, Fcw),
         port_3.h_outflow ~ instream(port_4.h_outflow),
